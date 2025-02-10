@@ -62,7 +62,12 @@ input {
     margin-top: 4px;
     width: 100% ;
 }
-
+#zmianaRecept {
+    background-color: #707793;
+}
+#zmianaRecept:hover {
+    background-color:white;
+}
 /* .wyswietl::after {
     content: '';
     position: absolute;

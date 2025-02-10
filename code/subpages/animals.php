@@ -5,177 +5,195 @@ $databaseName = "klinika";
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
-    if(isset($_POST["wyswietlSubmit"])) {
-        $idZwierzecia = $_POST["idZwierzecia"]?? null;
-        $imie         = $_POST["imie"]        ?? null;
-        $gatunek      = $_POST["gatunek"]     ?? null;
-        $rasa         = $_POST["rasa"]        ?? null;
-        $dob          = $_POST["dob"]         ?? null;
-        $plec         = $_POST["plec"]        ?? null;
-
-        $array = [
-            "idZwierzecia" => $idZwierzecia,
-            "imie" => $imie,
-            "gatunek" => $gatunek,
-            "rasa" => $rasa,
-            "dob" => $dob,
-            "plec" => $plec
-        ];
-
-        $selectConditions = [];
-
-        foreach ($array as $key => $value) {
-            if (!empty($value)) {
-                array_push($selectConditions, $key . "=" .(is_string($value) ? "'$value'" : $value));
+    $conn = null;
+    try {
+        if (!empty($_SESSION['username']) && (!empty($_SESSION['password']) || $_SESSION['password']=="")) {
+            $conn = new mysqli("localhost",  $_SESSION['username'], $_SESSION['password'], $databaseName);
+            $conn->set_charset("utf8");
+            if ($conn->connect_error) {
+                throw new mysqli_sql_exception();
             }
         }
-        if (count($selectConditions) > 0) {
+    } catch (mysqli_sql_exception $e) {
+    } catch (Exception $e) {   
+    }
 
-            $selectConditionsString = implode(" AND ", $selectConditions);
-            $query = "SELECT * FROM $tableName WHERE $selectConditionsString";
-            $_SESSION['table'] = $query;
-        } else {
-            $query = $query = "SELECT * FROM $tableName";
-            $_SESSION['table'] = $query;
+    if($conn)
+    {
+        if(isset($_POST["wyswietlSubmit"])) {
+            $idZwierzecia = $_POST["idZwierzecia"]?? null;
+            $imie         = $_POST["imie"]        ?? null;
+            $gatunek      = $_POST["gatunek"]     ?? null;
+            $rasa         = $_POST["rasa"]        ?? null;
+            $dob          = $_POST["dob"]         ?? null;
+            $plec         = $_POST["plec"]        ?? null;
+    
+            $array = [
+                "idZwierzecia" => $idZwierzecia,
+                "imie" => $imie,
+                "gatunek" => $gatunek,
+                "rasa" => $rasa,
+                "dob" => $dob,
+                "plec" => $plec
+            ];
+    
+            $selectConditions = [];
+    
+            foreach ($array as $key => $value) {
+                if (!empty($value)) {
+                    array_push($selectConditions, $key . "=" .(is_string($value) ? "'$value'" : $value));
+                }
+            }
+            if (count($selectConditions) > 0) {
+    
+                $selectConditionsString = implode(" AND ", $selectConditions);
+                $query = "SELECT * FROM $tableName WHERE $selectConditionsString";
+                $_SESSION['table'] = $query;
+            } else {
+                $query = $query = "SELECT * FROM $tableName";
+                $_SESSION['table'] = $query;
+            }
+            header("Location: ?info=Wyświetlono+zwierzeta");
+            exit;
         }
-        header("Location: ?info=Wyświetlono+zwierzeta");
+        if (isset($_POST["dodajSubmit"])) {
+            $imie         = $_POST["imie"]        ?? null;
+            $gatunek      = $_POST["gatunek"]     ?? null;
+            $rasa         = $_POST["rasa"]        ?? null;
+            $dob          = $_POST["dob"]         ?? null;
+            $plec         = $_POST["plec"]        ?? null;
+    
+            $array = [
+                "imie" => $imie,
+                "gatunek" => $gatunek,
+                "rasa" => $rasa,
+                "dob" => $dob,
+                "plec" => $plec
+            ];
+    
+            $insertCols = [];
+            $insertVals = [];
+    
+            foreach ($array as $key => $value) {
+                if (!empty($value)) {
+                    $insertCols[] = $key;
+                    $insertVals[] = is_string($value) ? "'$value'" : $value;
+                }
+            }
+    
+            if (count($insertCols) > 0) {
+                $colsString = implode(", ", $insertCols);
+                $valsString = implode(", ", $insertVals);
+                $query = "INSERT INTO $tableName ($colsString) VALUES ($valsString)";
+                $conn->query($query);
+    
+                header("Location: ?info=Dodano+zwierze");
+                exit;
+            } else {
+                header("Location: ?info=Brak+danych+do+dodania");
+                exit;
+            }
+    
+        } elseif (isset($_POST["usunSubmit"])) {
+            $idZwierzecia        = $_POST["idZwierzecia"] ?? null;
+            $imie                = $_POST["imie"]         ?? null;
+            $gatunek             = $_POST["gatunek"]      ?? null;
+            $rasa                = $_POST["rasa"]         ?? null;
+            $dob                 = $_POST["dob"]          ?? null;
+            $plec                = $_POST["plec"]         ?? null;
+    
+            $array = [
+                "idZwierzecia" => $idZwierzecia,
+                "imie" => $imie,
+                "gatunek" => $gatunek,
+                "rasa" => $rasa,
+                "dob" => $dob,
+                "plec" => $plec
+            ];
+    
+            $conditions = [];
+            foreach ($array as $key => $value) {
+                if (!empty($value)  || $value === '0') {
+                    $val = is_string($value) ? "'$value'" : $value;
+                    $conditions[] = "$key = $val";
+                }
+            }
+    
+            if (count($conditions) > 0) {
+                $where = implode(" AND ", $conditions);
+                $query = "DELETE FROM $tableName WHERE $where";
+                $conn->query($query);
+                header("Location: ?info=Usunięto+zwierze(ta)");
+                exit;
+            } else {
+                header("Location: ?info=Brak+danych+do+usunięcia");
+                exit;
+            }
+    
+        } elseif (isset($_POST["zmienSubmit"])) {
+            $idZwierzecia        = $_POST["idZwierzecia"] ?? null;
+            $imie                = $_POST["imie"]         ?? null;
+            $gatunek             = $_POST["gatunek"]      ?? null;
+            $rasa                = $_POST["rasa"]         ?? null;
+            $dob                 = $_POST["dob"]          ?? null;
+            $plec                = $_POST["plec"]         ?? null;
+    
+            $imieZmienione        = $_POST["imieZmienione"]        ?? null;
+            $gatunekZmienione     = $_POST["gatunekZmienione"]     ?? null;
+            $rasaZmienione        = $_POST["rasaZmienione"]        ?? null;
+            $dobZmienione         = $_POST["dobZmienione"]         ?? null;
+            $plecZmienione        = $_POST["plecZmienione"]        ?? null;
+    
+            $whereArray = [
+                "idZwierzecia" => $idZwierzecia,
+                "imie" => $imie,
+                "gatunek" => $gatunek,
+                "rasa" => $rasa,
+                "dob" => $dob,
+                "plec" => $plec
+            ];
+    
+            $updateArray = [
+                "imie" => $imieZmienione,
+                "gatunek" => $gatunekZmienione,
+                "rasa" => $rasaZmienione,
+                "dob" => $dobZmienione,
+                "plec" => $plecZmienione
+            ];
+    
+            $sets = [];
+            foreach ($updateArray as $key => $val) {
+                if (!empty($val)  || $val === '0') {
+                    $val = is_string($val) ? "'$val'" : $val;
+                    $sets[] = "$key = $val";
+                }
+            }
+    
+            $conditions = [];
+            foreach ($whereArray as $key => $val) {
+                if (!empty($val)  || $val === '0') {
+                    $val = is_string($val) ? "'$val'" : $val;
+                    $conditions[] = "$key = $val";
+                }
+            }
+    
+            if (count($sets) > 0 && count($conditions) > 0) {
+                $setString = implode(", ", $sets);
+                $whereString = implode(" AND ", $conditions);
+                $query = "UPDATE $tableName SET $setString WHERE $whereString";
+                $conn->query($query);
+                header("Location: ?info=Zmieniono+dane+zwierzecia");
+                exit;
+            } else {
+                header("Location: ?info=Brak+danych+do+zmiany");
+                exit;
+            }
+        }
+    
+        header("Location: ?info=Brak+operacji");
         exit;
     }
-    if (isset($_POST["dodajSubmit"])) {
-        $imie         = $_POST["imie"]        ?? null;
-        $gatunek      = $_POST["gatunek"]     ?? null;
-        $rasa         = $_POST["rasa"]        ?? null;
-        $dob          = $_POST["dob"]         ?? null;
-        $plec         = $_POST["plec"]        ?? null;
-
-        $array = [
-            "imie" => $imie,
-            "gatunek" => $gatunek,
-            "rasa" => $rasa,
-            "dob" => $dob,
-            "plec" => $plec
-        ];
-
-        $insertCols = [];
-        $insertVals = [];
-
-        foreach ($array as $key => $value) {
-            if (!empty($value)) {
-                $insertCols[] = $key;
-                $insertVals[] = is_string($value) ? "'$value'" : $value;
-            }
-        }
-
-        if (count($insertCols) > 0) {
-            $colsString = implode(", ", $insertCols);
-            $valsString = implode(", ", $insertVals);
-            $query = "INSERT INTO $tableName ($colsString) VALUES ($valsString)";
-            $conn->query($query);
-
-            header("Location: ?info=Dodano+zwierze");
-            exit;
-        } else {
-            header("Location: ?info=Brak+danych+do+dodania");
-            exit;
-        }
-
-    } elseif (isset($_POST["usunSubmit"])) {
-        $idZwierzecia        = $_POST["idZwierzecia"] ?? null;
-        $imie                = $_POST["imie"]         ?? null;
-        $gatunek             = $_POST["gatunek"]      ?? null;
-        $rasa                = $_POST["rasa"]         ?? null;
-        $dob                 = $_POST["dob"]          ?? null;
-        $plec                = $_POST["plec"]         ?? null;
-
-        $array = [
-            "idZwierzecia" => $idZwierzecia,
-            "imie" => $imie,
-            "gatunek" => $gatunek,
-            "rasa" => $rasa,
-            "dob" => $dob,
-            "plec" => $plec
-        ];
-
-        $conditions = [];
-        foreach ($array as $key => $value) {
-            if (!empty($value)  || $value === '0') {
-                $val = is_string($value) ? "'$value'" : $value;
-                $conditions[] = "$key = $val";
-            }
-        }
-
-        if (count($conditions) > 0) {
-            $where = implode(" AND ", $conditions);
-            $query = "DELETE FROM $tableName WHERE $where";
-            $conn->query($query);
-            header("Location: ?info=Usunięto+zwierze(ta)");
-            exit;
-        } else {
-            header("Location: ?info=Brak+danych+do+usunięcia");
-            exit;
-        }
-
-    } elseif (isset($_POST["zmienSubmit"])) {
-        $idZwierzecia        = $_POST["idZwierzecia"] ?? null;
-        $imie                = $_POST["imie"]         ?? null;
-        $gatunek             = $_POST["gatunek"]      ?? null;
-        $rasa                = $_POST["rasa"]         ?? null;
-        $dob                 = $_POST["dob"]          ?? null;
-        $plec                = $_POST["plec"]         ?? null;
-
-        $imieZmienione        = $_POST["imieZmienione"]        ?? null;
-        $gatunekZmienione     = $_POST["gatunekZmienione"]     ?? null;
-        $rasaZmienione        = $_POST["rasaZmienione"]        ?? null;
-        $dobZmienione         = $_POST["dobZmienione"]         ?? null;
-        $plecZmienione        = $_POST["plecZmienione"]        ?? null;
-
-        $whereArray = [
-            "idZwierzecia" => $idZwierzecia,
-            "imie" => $imie,
-            "gatunek" => $gatunek,
-            "rasa" => $rasa,
-            "dob" => $dob,
-            "plec" => $plec
-        ];
-
-        $updateArray = [
-            "imie" => $imieZmienione,
-            "gatunek" => $gatunekZmienione,
-            "rasa" => $rasaZmienione,
-            "dob" => $dobZmienione,
-            "plec" => $plecZmienione
-        ];
-
-        $sets = [];
-        foreach ($updateArray as $key => $val) {
-            if (!empty($val)  || $val === '0') {
-                $val = is_string($val) ? "'$val'" : $val;
-                $sets[] = "$key = $val";
-            }
-        }
-
-        $conditions = [];
-        foreach ($whereArray as $key => $val) {
-            if (!empty($val)  || $val === '0') {
-                $val = is_string($val) ? "'$val'" : $val;
-                $conditions[] = "$key = $val";
-            }
-        }
-
-        if (count($sets) > 0 && count($conditions) > 0) {
-            $setString = implode(", ", $sets);
-            $whereString = implode(" AND ", $conditions);
-            $query = "UPDATE $tableName SET $setString WHERE $whereString";
-            $conn->query($query);
-            header("Location: ?info=Zmieniono+dane+zwierzecia");
-            exit;
-        } else {
-            header("Location: ?info=Brak+danych+do+zmiany");
-            exit;
-        }
-    }
-
-    header("Location: ?info=Brak+operacji");
+    header("Location: ?info=Błąd+połączenia+z+baza+danych");
     exit;
 }
 

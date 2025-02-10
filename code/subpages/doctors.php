@@ -1,181 +1,245 @@
 <?php
 session_start();
-$tableName = "zwierzeta";
+$tableName = "lekarze";
 $databaseName = "klinika";
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
-    if(isset($_POST["wyswietlSubmit"])) {
-        $idZwierzecia = $_POST["idZwierzecia"]?? null;
-        $imie         = $_POST["imie"]        ?? null;
-        $gatunek      = $_POST["gatunek"]     ?? null;
-        $rasa         = $_POST["rasa"]        ?? null;
-        $dob          = $_POST["dob"]         ?? null;
-        $plec         = $_POST["plec"]        ?? null;
-
-        $array = [
-            "idZwierzecia" => $idZwierzecia,
-            "imie" => $imie,
-            "gatunek" => $gatunek,
-            "rasa" => $rasa,
-            "dob" => $dob,
-            "plec" => $plec
-        ];
-
-        $selectConditions = [];
-
-        foreach ($array as $key => $value) {
-            if (!empty($value)) {
-                array_push($selectConditions, $key . "=" .(is_string($value) ? "'$value'" : $value));
+    $conn = null;
+    try {
+        if (!empty($_SESSION['username']) && (!empty($_SESSION['password']) || $_SESSION['password']=="")) {
+            $conn = new mysqli("localhost",  $_SESSION['username'], $_SESSION['password'], $databaseName);
+            $conn->set_charset("utf8");
+            if ($conn->connect_error) {
+                throw new mysqli_sql_exception();
             }
         }
-        if (count($selectConditions) > 0) {
+    } catch (mysqli_sql_exception $e) {
+    } catch (Exception $e) {   
+    }
+    if($conn)
+    {
 
-            $selectConditionsString = implode(" AND ", $selectConditions);
-            $query = "SELECT * FROM $tableName WHERE $selectConditionsString";
-            $_SESSION['table'] = $query;
-        } else {
-            $query = $query = "SELECT * FROM $tableName";
-            $_SESSION['table'] = $query;
+        if(isset($_POST["wyswietlSubmit"])) {
+            $idLekarza         = $_POST["idLekarza"]         ?? null;
+            $imie              = $_POST["imie"]              ?? null;
+            $nazwisko          = $_POST["nazwisko"]          ?? null;
+            $pensja            = $_POST["pensja"]            ?? null;
+            $specjalizacja     = $_POST["specjalizacja"]     ?? null;
+            $dob               = $_POST["dob"]               ?? null;
+            $numerTelefonu     = $_POST["numerTelefonu"]     ?? null;
+            $adresEmail        = $_POST["adresEmail"]        ?? null;
+            $adresZamieszkania = $_POST["adresZamieszkania"] ?? null;
+            $kodPocztowy       = $_POST["kodPocztowy"]       ?? null;
+
+            $array = [
+                "idLekarza" => $idLekarza,
+                "imie" => $imie,
+                "nazwisko" => $nazwisko,
+                "pensja" => $pensja,
+                "specjalizacja" => $specjalizacja,
+                "dob" => $dob,
+                "numerTelefonu" => $numerTelefonu,
+                "adresEmail" => $adresEmail,
+                "adresZamieszkania" => $adresZamieszkania,
+                "kodPocztowy" => $kodPocztowy
+
+            ];
+
+            $selectConditions = [];
+
+            foreach ($array as $key => $value) {
+                if (!empty($value)) {
+                    array_push($selectConditions, $key . "=" .(is_string($value) ? "'$value'" : $value));
+                }
+            }
+            if (count($selectConditions) > 0) {
+
+                $selectConditionsString = implode(" AND ", $selectConditions);
+                $query = "SELECT * FROM $tableName WHERE $selectConditionsString";
+                $_SESSION['table'] = $query;
+            } else {
+                $query = $query = "SELECT * FROM $tableName";
+                $_SESSION['table'] = $query;
+            }
+            header("Location: ?info=Wyświetlono+lekarzy");
+            exit;
         }
-        header("Location: ?info=Wyświetlono+zwierzeta");
+        if (isset($_POST["dodajSubmit"])) {
+            $imie              = $_POST["imie"]              ?? null;
+            $nazwisko          = $_POST["nazwisko"]          ?? null;
+            $pensja            = $_POST["pensja"]            ?? null;
+            $specjalizacja     = $_POST["specjalizacja"]     ?? null;
+            $dob               = $_POST["dob"]               ?? null;
+            $numerTelefonu     = $_POST["numerTelefonu"]     ?? null;
+            $adresEmail        = $_POST["adresEmail"]        ?? null;
+            $adresZamieszkania = $_POST["adresZamieszkania"] ?? null;
+            $kodPocztowy       = $_POST["kodPocztowy"]       ?? null;
+
+            $array = [
+                "imie" => $imie,
+                "nazwisko" => $nazwisko,
+                "pensja" => $pensja,
+                "specjalizacja" => $specjalizacja,
+                "dob" => $dob,
+                "numerTelefonu" => $numerTelefonu,
+                "adresEmail" => $adresEmail,
+                "adresZamieszkania" => $adresZamieszkania,
+                "kodPocztowy" => $kodPocztowy
+
+            ];
+
+            $insertCols = [];
+            $insertVals = [];
+
+            foreach ($array as $key => $value) {
+                if (!empty($value)) {
+                    $insertCols[] = $key;
+                    $insertVals[] = is_string($value) ? "'$value'" : $value;
+                }
+            }
+
+            if (count($insertCols) > 0) {
+                $colsString = implode(", ", $insertCols);
+                $valsString = implode(", ", $insertVals);
+                $query = "INSERT INTO $tableName ($colsString) VALUES ($valsString)";
+                $conn->query($query);
+
+                header("Location: ?info=Dodano+lekarza");
+                exit;
+            } else {
+                header("Location: ?info=Brak+danych+do+dodania");
+                exit;
+            }
+
+        } elseif (isset($_POST["usunSubmit"])) {
+            $idLekarza         = $_POST["idLekarza"]         ?? null;
+            $imie              = $_POST["imie"]              ?? null;
+            $nazwisko          = $_POST["nazwisko"]          ?? null;
+            $pensja            = $_POST["pensja"]            ?? null;
+            $specjalizacja     = $_POST["specjalizacja"]     ?? null;
+            $dob               = $_POST["dob"]               ?? null;
+            $numerTelefonu     = $_POST["numerTelefonu"]     ?? null;
+            $adresEmail        = $_POST["adresEmail"]        ?? null;
+            $adresZamieszkania = $_POST["adresZamieszkania"] ?? null;
+            $kodPocztowy       = $_POST["kodPocztowy"]       ?? null;
+
+            $array = [
+                "idLekarza" => $idLekarza,
+                "imie" => $imie,
+                "nazwisko" => $nazwisko,
+                "pensja" => $pensja,
+                "specjalizacja" => $specjalizacja,
+                "dob" => $dob,
+                "numerTelefonu" => $numerTelefonu,
+                "adresEmail" => $adresEmail,
+                "adresZamieszkania" => $adresZamieszkania,
+                "kodPocztowy" => $kodPocztowy
+
+            ];
+
+            $conditions = [];
+            foreach ($array as $key => $value) {
+                if (!empty($value)  || $value === '0') {
+                    $val = is_string($value) ? "'$value'" : $value;
+                    $conditions[] = "$key = $val";
+                }
+            }
+
+            if (count($conditions) > 0) {
+                $where = implode(" AND ", $conditions);
+                $query = "DELETE FROM $tableName WHERE $where";
+                $conn->query($query);
+                header("Location: ?info=Usunięto+lekarza/y");
+                exit;
+            } else {
+                header("Location: ?info=Brak+danych+do+usunięcia");
+                exit;
+            }
+
+        } elseif (isset($_POST["zmienSubmit"])) {
+
+            $idLekarza         = $_POST["idLekarza"]         ?? null;
+            $imie              = $_POST["imie"]              ?? null;
+            $nazwisko          = $_POST["nazwisko"]          ?? null;
+            $pensja            = $_POST["pensja"]            ?? null;
+            $specjalizacja     = $_POST["specjalizacja"]     ?? null;
+            $dob               = $_POST["dob"]               ?? null;
+            $numerTelefonu     = $_POST["numerTelefonu"]     ?? null;
+            $adresEmail        = $_POST["adresEmail"]        ?? null;
+            $adresZamieszkania = $_POST["adresZamieszkania"] ?? null;
+            $kodPocztowy       = $_POST["kodPocztowy"]       ?? null;
+
+            $imieZmienione              = $_POST["imieZmienione"]              ?? null;
+            $nazwiskoZmienione          = $_POST["nazwiskoZmienione"]          ?? null;
+            $pensjaZmienione            = $_POST["pensjaZmienione"]            ?? null;
+            $specjalizacjaZmienione     = $_POST["specjalizacjaZmienione"]     ?? null;
+            $dobZmienione               = $_POST["dobZmienione"]               ?? null;
+            $numerTelefonuZmienione     = $_POST["numerTelefonuZmienione"]     ?? null;
+            $adresEmailZmienione        = $_POST["adresEmailZmienione"]        ?? null;
+            $adresZamieszkaniaZmienione = $_POST["adresZamieszkaniaZmienione"] ?? null;
+            $kodPocztowyZmienione       = $_POST["kodPocztowyZmienione"]       ?? null;
+
+            $whereArray = [
+                "idLekarza" => $idLekarza,
+                "imie" => $imie,
+                "nazwisko" => $nazwisko,
+                "pensja" => $pensja,
+                "specjalizacja" => $specjalizacja,
+                "dob" => $dob,
+                "numerTelefonu" => $numerTelefonu,
+                "adresEmail" => $adresEmail,
+                "adresZamieszkania" => $adresZamieszkania,
+                "kodPocztowy" => $kodPocztowy
+
+            ];
+           
+            $updateArray = [
+                "imie" => $imieZmienione,
+                "nazwisko" => $nazwiskoZmienione,
+                "pensja" => $pensjaZmienione,
+                "specjalizacja" => $specjalizacjaZmienione,
+                "dob" => $dobZmienione,
+                "numerTelefonu" => $numerTelefonuZmienione,
+                "adresEmail" => $adresEmailZmienione,
+                "adresZamieszkania" => $adresZamieszkaniaZmienione,
+                "kodPocztowy" => $kodPocztowyZmienione
+
+            ];
+
+            $sets = [];
+            foreach ($updateArray as $key => $val) {
+                if (!empty($val)  || $val === '0') {
+                    $val = is_string($val) ? "'$val'" : $val;
+                    $sets[] = "$key = $val";
+                }
+            }
+
+            $conditions = [];
+            foreach ($whereArray as $key => $val) {
+                if (!empty($val)  || $val === '0') {
+                    $val = is_string($val) ? "'$val'" : $val;
+                    $conditions[] = "$key = $val";
+                }
+            }
+        
+            if (count($sets) > 0 && count($conditions) > 0) {
+                $setString = implode(", ", $sets);
+                $whereString = implode(" AND ", $conditions);
+                $query = "UPDATE $tableName SET $setString WHERE $whereString";
+                $conn->query($query);
+                header("Location: ?info=Zmieniono+dane+lekarzy+$query");
+                exit;
+            } else {
+                header("Location: ?info=Brak+danych+do+zmiany+$sets+$conditions");
+                exit;
+            }
+        }
+
+        header("Location: ?info=Brak+operacji");
         exit;
     }
-    if (isset($_POST["dodajSubmit"])) {
-        $imie         = $_POST["imie"]        ?? null;
-        $gatunek      = $_POST["gatunek"]     ?? null;
-        $rasa         = $_POST["rasa"]        ?? null;
-        $dob          = $_POST["dob"]         ?? null;
-        $plec         = $_POST["plec"]        ?? null;
-
-        $array = [
-            "imie" => $imie,
-            "gatunek" => $gatunek,
-            "rasa" => $rasa,
-            "dob" => $dob,
-            "plec" => $plec
-        ];
-
-        $insertCols = [];
-        $insertVals = [];
-
-        foreach ($array as $key => $value) {
-            if (!empty($value)) {
-                $insertCols[] = $key;
-                $insertVals[] = is_string($value) ? "'$value'" : $value;
-            }
-        }
-
-        if (count($insertCols) > 0) {
-            $colsString = implode(", ", $insertCols);
-            $valsString = implode(", ", $insertVals);
-            $query = "INSERT INTO $tableName ($colsString) VALUES ($valsString)";
-            $conn->query($query);
-
-            header("Location: ?info=Dodano+zwierze");
-            exit;
-        } else {
-            header("Location: ?info=Brak+danych+do+dodania");
-            exit;
-        }
-
-    } elseif (isset($_POST["usunSubmit"])) {
-        $idZwierzecia        = $_POST["idZwierzecia"] ?? null;
-        $imie                = $_POST["imie"]         ?? null;
-        $gatunek             = $_POST["gatunek"]      ?? null;
-        $rasa                = $_POST["rasa"]         ?? null;
-        $dob                 = $_POST["dob"]          ?? null;
-        $plec                = $_POST["plec"]         ?? null;
-
-        $array = [
-            "idZwierzecia" => $idZwierzecia,
-            "imie" => $imie,
-            "gatunek" => $gatunek,
-            "rasa" => $rasa,
-            "dob" => $dob,
-            "plec" => $plec
-        ];
-
-        $conditions = [];
-        foreach ($array as $key => $value) {
-            if (!empty($value)  || $value === '0') {
-                $val = is_string($value) ? "'$value'" : $value;
-                $conditions[] = "$key = $val";
-            }
-        }
-
-        if (count($conditions) > 0) {
-            $where = implode(" AND ", $conditions);
-            $query = "DELETE FROM $tableName WHERE $where";
-            $conn->query($query);
-            header("Location: ?info=Usunięto+zwierze(ta)");
-            exit;
-        } else {
-            header("Location: ?info=Brak+danych+do+usunięcia");
-            exit;
-        }
-
-    } elseif (isset($_POST["zmienSubmit"])) {
-        $idZwierzecia        = $_POST["idZwierzecia"] ?? null;
-        $imie                = $_POST["imie"]         ?? null;
-        $gatunek             = $_POST["gatunek"]      ?? null;
-        $rasa                = $_POST["rasa"]         ?? null;
-        $dob                 = $_POST["dob"]          ?? null;
-        $plec                = $_POST["plec"]         ?? null;
-
-        $imieZmienione        = $_POST["imieZmienione"]        ?? null;
-        $gatunekZmienione     = $_POST["gatunekZmienione"]     ?? null;
-        $rasaZmienione        = $_POST["rasaZmienione"]        ?? null;
-        $dobZmienione         = $_POST["dobZmienione"]         ?? null;
-        $plecZmienione        = $_POST["plecZmienione"]        ?? null;
-
-        $array = [
-            "idZwierzecia" => $idZwierzecia,
-            "imie" => $imie,
-            "gatunek" => $gatunek,
-            "rasa" => $rasa,
-            "dob" => $dob,
-            "plec" => $plec
-        ];
-
-        $array = [
-            "imie" => $imieZmienione,
-            "gatunek" => $gatunekZmienione,
-            "rasa" => $rasaZmienione,
-            "dob" => $dobZmienione,
-            "plec" => $plecZmienione
-        ];
-
-        $sets = [];
-        foreach ($updateArray as $key => $val) {
-            if (!empty($val)  || $val === '0') {
-                $val = is_string($val) ? "'$val'" : $val;
-                $sets[] = "$key = $val";
-            }
-        }
-
-        $conditions = [];
-        foreach ($whereArray as $key => $val) {
-            if (!empty($val)  || $val === '0') {
-                $val = is_string($val) ? "'$val'" : $val;
-                $conditions[] = "$key = $val";
-            }
-        }
-
-        if (count($sets) > 0 && count($conditions) > 0) {
-            $setString = implode(", ", $sets);
-            $whereString = implode(" AND ", $conditions);
-            $query = "UPDATE $tableName SET $setString WHERE $whereString";
-            $conn->query($query);
-            header("Location: ?info=Zmieniono+dane+zwierzecia");
-            exit;
-        } else {
-            header("Location: ?info=Brak+danych+do+zmiany");
-            exit;
-        }
-    }
-
-    header("Location: ?info=Brak+operacji");
+    header("Location: ?info=Błąd+połączenia+z+baza+danych");
     exit;
 }
 
@@ -202,19 +266,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <h3>Menu</h3>
         <nav class=menu>
                 <a href="../index.php" class="menu-item">Home</a>
-                <a href="animals.php" class="menu-item is-active">Zwierzęta</a>
+                <a href="animals.php" class="menu-item">Zwierzęta</a>
                 <a href="owners.php" class="menu-item">Właściciele</a>
                 <a href="appointments.php" class="menu-item">Wizyty</a>
                 <a href="surgeries.php" class="menu-item">Zabiegi</a>
                 <a href="treatments.php" class="menu-item">Leczenia</a>
-                <a href="doctors.php" class="menu-item">Lekarze</a>
+                <a href="doctors.php" class="menu-item is-active">Lekarze</a>
                 <a href="prescriptions.php" class="menu-item">Recepty</a>
                 <a href="medicines.php" class="menu-item">Leki</a>
 
         </nav>
     </aside>
     <main class="content">
-        <h1>Zwierzęta</h1>
+        <h1>Lekarze</h1>
         <hr>
         <?php
         $conn = null;
@@ -270,20 +334,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 echo <<<EOD
                 <div class="wyswietl">
                     <h2>Wyświetl</h2>
-                    <p>Dane zwierzęcia / zwierząt do wyświetlenia</p>
+                    <p>Dane lekarza/y do wyświetlenia</p>
                     <form action="?" method="post">
-                        <label for="idZwierzecia">Id: </label>
-                        <input type="number" id="idZwierzecia" name="idZwierzecia"><br>
-                        <label for="imie">Imię: </label>
+                        <label for="idLekarza">Id Lekarza: </label>
+                        <input type="number" id="idLekarza" name="idLekarza"><br>
+                        <label for="imie">Imie: </label>
                         <input type="text" id="imie" name="imie"><br>
-                        <label for="gatunek">Gatunek: </label>
-                        <input type="text" id="gatunek" name="gatunek"><br>
-                        <label for="rasa">Rasa: </label>
-                        <input type="text" id="rasa" name="rasa"><br>
+                        <label for="nazwisko">Nazwisko: </label>
+                        <input type="text" id="nazwisko" name="nazwisko"><br>
+                        <label for="pensja">Pensja: </label>
+                        <input type="text" id="pensja" name="pensja"><br>
+                        <label for="specjalizacja">Specjalizacja: </label>
+                        <input type="date" id="specjalizacja" name="specjalizacja"><br>
                         <label for="dob">Data Urodzenia: </label>
-                        <input type="date" id="dob" name="dob"><br>
-                        <label for="plec">Płeć: </label>
-                        <input type="text" id="plec" name="plec"><br><br>
+                        <input type="text" id="dob" name="dob"><br>
+                        <label for="numerTelefonu">Numer Telefonu: </label>
+                        <input type="text" id="numerTelefonu" name="numerTelefonu"><br>
+                        <label for="adresEmail">Adres Email: </label>
+                        <input type="text" id="adresEmail" name="adresEmail"><br>
+                        <label for="adresZamieszkania">Adres Zamieszkania: </label>
+                        <input type="text" id="adresZamieszkania" name="adresZamieszkania"><br>
+                        <label for="kodPocztowy">Kod Pocztowy: </label>
+                        <input type="text" id="kodPocztowy" name="kodPocztowy"><br><br>
                         <div class="controlButtons">
                             <input type="submit" name="wyswietlSubmit" value="Zastosuj">
                             <input type="reset" value="Wyczyść">
@@ -298,16 +370,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <h2>Dodaj</h2>
                     <p>Dane zwierzecia do dodania</p>
                     <form action="?" method="post">
-                        <label for="imie">Imię: </label>
+                        <label for="imie">Imie: </label>
                         <input type="text" id="imie" name="imie"><br>
-                        <label for="gatunek">Gatunek: </label>
-                        <input type="text" id="gatunek" name="gatunek"><br>
-                        <label for="rasa">Rasa: </label>
-                        <input type="text" id="rasa" name="rasa"><br>
+                        <label for="nazwisko">Nazwisko: </label>
+                        <input type="text" id="nazwisko" name="nazwisko"><br>
+                        <label for="pensja">Pensja: </label>
+                        <input type="text" id="pensja" name="pensja"><br>
+                        <label for="specjalizacja">Specjalizacja: </label>
+                        <input type="date" id="specjalizacja" name="specjalizacja"><br>
                         <label for="dob">Data Urodzenia: </label>
-                        <input type="date" id="dob" name="dob"><br>
-                        <label for="plec">Płeć: </label>
-                        <input type="text" id="plec" name="plec"><br><br>
+                        <input type="text" id="dob" name="dob"><br>
+                        <label for="numerTelefonu">Numer Telefonu: </label>
+                        <input type="text" id="numerTelefonu" name="numerTelefonu"><br>
+                        <label for="adresEmail">Adres Email: </label>
+                        <input type="text" id="adresEmail" name="adresEmail"><br>
+                        <label for="adresZamieszkania">Adres Zamieszkania: </label>
+                        <input type="text" id="adresZamieszkania" name="adresZamieszkania"><br>
+                        <label for="kodPocztowy">Kod Pocztowy: </label>
+                        <input type="text" id="kodPocztowy" name="kodPocztowy"><br><br>
                         <div class="controlButtons">
                             <input type="submit" name="dodajSubmit" value="Zastosuj">
                             <input type="reset" value="Wyczyść">
@@ -323,18 +403,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <h2>Usuń</h2>
                     <p>Dane zwierzęcia / zwierząt do usunięcia</p>
                     <form action="?" method="post">
-                        <label for="idZwierzecia">Id: </label>
-                        <input type="number" id="idZwierzecia" name="idZwierzecia"><br>
-                        <label for="imie">Imię: </label>
+                        <label for="idLekarza">Id Lekarza: </label>
+                        <input type="number" id="idLekarza" name="idLekarza"><br>
+                        <label for="imie">Imie: </label>
                         <input type="text" id="imie" name="imie"><br>
-                        <label for="gatunek">Gatunek: </label>
-                        <input type="text" id="gatunek" name="gatunek"><br>
-                        <label for="rasa">Rasa: </label>
-                        <input type="text" id="rasa" name="rasa"><br>
+                        <label for="nazwisko">Nazwisko: </label>
+                        <input type="text" id="nazwisko" name="nazwisko"><br>
+                        <label for="pensja">Pensja: </label>
+                        <input type="text" id="pensja" name="pensja"><br>
+                        <label for="specjalizacja">Specjalizacja: </label>
+                        <input type="date" id="specjalizacja" name="specjalizacja"><br>
                         <label for="dob">Data Urodzenia: </label>
-                        <input type="date" id="dob" name="dob"><br>
-                        <label for="plec">Płeć: </label>
-                        <input type="text" id="plec" name="plec"><br><br>
+                        <input type="text" id="dob" name="dob"><br>
+                        <label for="numerTelefonu">Numer Telefonu: </label>
+                        <input type="text" id="numerTelefonu" name="numerTelefonu"><br>
+                        <label for="adresEmail">Adres Email: </label>
+                        <input type="text" id="adresEmail" name="adresEmail"><br>
+                        <label for="adresZamieszkania">Adres Zamieszkania: </label>
+                        <input type="text" id="adresZamieszkania" name="adresZamieszkania"><br>
+                        <label for="kodPocztowy">Kod Pocztowy: </label>
+                        <input type="text" id="kodPocztowy" name="kodPocztowy"><br><br>
                         <div class="controlButtons">
                             <input type="submit" name="usunSubmit" value="Zastosuj">
                             <input type="reset" value="Wyczyść">
@@ -350,29 +438,45 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <h2>Zmień</h2>
                     <p>Dane zwierzęcia / zwierząt do zmiany</p>
                     <form action="?" method="post">
-                        <label for="idZwierzecia">Id: </label>
-                        <input type="number" id="idZwierzecia" name="idZwierzecia"><br>
-                        <label for="imie">Imię: </label>
+                        <label for="idLekarza">Id Lekarza: </label>
+                        <input type="number" id="idLekarza" name="idLekarza"><br>
+                        <label for="imie">Imie: </label>
                         <input type="text" id="imie" name="imie"><br>
-                        <label for="gatunek">Gatunek: </label>
-                        <input type="text" id="gatunek" name="gatunek"><br>
-                        <label for="rasa">Rasa: </label>
-                        <input type="text" id="rasa" name="rasa"><br>
+                        <label for="nazwisko">Nazwisko: </label>
+                        <input type="text" id="nazwisko" name="nazwisko"><br>
+                        <label for="pensja">Pensja: </label>
+                        <input type="text" id="pensja" name="pensja"><br>
+                        <label for="specjalizacja">Specjalizacja: </label>
+                        <input type="text" id="specjalizacja" name="specjalizacja"><br>
                         <label for="dob">Data Urodzenia: </label>
                         <input type="date" id="dob" name="dob"><br>
-                        <label for="plec">Płeć: </label>
-                        <input type="text" id="plec" name="plec"><br><br>
+                        <label for="numerTelefonu">Numer Telefonu: </label>
+                        <input type="text" id="numerTelefonu" name="numerTelefonu"><br>
+                        <label for="adresEmail">Adres Email: </label>
+                        <input type="text" id="adresEmail" name="adresEmail"><br>
+                        <label for="adresZamieszkania">Adres Zamieszkania: </label>
+                        <input type="text" id="adresZamieszkania" name="adresZamieszkania"><br>
+                        <label for="kodPocztowy">Kod Pocztowy: </label>
+                        <input type="text" id="kodPocztowy" name="kodPocztowy"><br><br>
                         <p>Nowe dane</p>
-                        <label for="imieZmienione">Imię: </label>
+                        <label for="imieZmienione">Imie: </label>
                         <input type="text" id="imieZmienione" name="imieZmienione"><br>
-                        <label for="gatunekZmienione">Gatunek: </label>
-                        <input type="text" id="gatunekZmienione" name="gatunekZmienione"><br>
-                        <label for="rasaZmienione">Rasa: </label>
-                        <input type="text" id="rasaZmienione" name="rasaZmienione"><br>
+                        <label for="nazwiskoZmienione">Nazwisko: </label>
+                        <input type="text" id="nazwiskoZmienione" name="nazwiskoZmienione"><br>
+                        <label for="pensjaZmienione">Pensja: </label>
+                        <input type="text" id="pensjaZmienione" name="pensjaZmienione"><br>
+                        <label for="specjalizacjaZmienione">Specjalizacja: </label>
+                        <input type="text" id="specjalizacjaZmienione" name="specjalizacjaZmienione"><br>
                         <label for="dobZmienione">Data Urodzenia: </label>
                         <input type="date" id="dobZmienione" name="dobZmienione"><br>
-                        <label for="plecZmienione">Płeć: </label>
-                        <input type="text" id="plecZmienione" name="plecZmienione"><br><br>
+                        <label for="numerTelefonuZmienione">Numer Telefonu: </label>
+                        <input type="text" id="numerTelefonuZmienione" name="numerTelefonuZmienione"><br>
+                        <label for="adresEmailZmienione">Adres Email: </label>
+                        <input type="text" id="adresEmailZmienione" name="adresEmailZmienione"><br>
+                        <label for="adresZamieszkaniaZmienione">Adres Zamieszkania: </label>
+                        <input type="text" id="adresZamieszkaniaZmienione" name="adresZamieszkaniaZmienione"><br>
+                        <label for="kodPocztowyZmienione">Kod Pocztowy: </label>
+                        <input type="text" id="kodPocztowyZmienione" name="kodPocztowyZmienione"><br><br>
                         <div class="controlButtons">
                             <input type="submit" name="zmienSubmit" value="Zastosuj">
                             <input type="reset" value="Wyczyść">

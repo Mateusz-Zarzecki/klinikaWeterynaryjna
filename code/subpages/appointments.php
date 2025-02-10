@@ -5,202 +5,220 @@ $databaseName = "klinika";
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
-    if(isset($_POST["wyswietlSubmit"])) {
-        $idWizyty         = $_POST["idWizyty"]       ?? null;
-        $idZwierzecia     = $_POST["idZwierzecia"]   ?? null;
-        $dataWizyty       = $_POST["dataWizyty"]     ?? null;
-        $nazwa            = $_POST["nazwa"]          ?? null;
-        $stanZwierzecia   = $_POST["stanZwierzecia"] ?? null;
-        $opisWizyty       = $_POST["popisWizytylec"] ?? null;
-        $status           = $_POST["status"]         ?? null;
-        $cenaWizyty       = $_POST["cenaWizyty"]     ?? null;
-
-        $array = [
-            "idWizyty" => $idWizyty,
-            "idZwierzecia" => $idZwierzecia,
-            "dataWizyty" => $dataWizyty,
-            "nazwa" => $nazwa,
-            "stanZwierzecia" => $stanZwierzecia,
-            "opisWizyty" => $opisWizyty,
-            "status" => $status,
-            "cenaWizyty" => $cenaWizyty
-
-        ];
-
-        $selectConditions = [];
-
-        foreach ($array as $key => $value) {
-            if (!empty($value)) {
-                array_push($selectConditions, $key . "=" .(is_string($value) ? "'$value'" : $value));
+    $conn = null;
+    try {
+        if (!empty($_SESSION['username']) && (!empty($_SESSION['password']) || $_SESSION['password']=="")) {
+            $conn = new mysqli("localhost",  $_SESSION['username'], $_SESSION['password'], $databaseName);
+            $conn->set_charset("utf8");
+            if ($conn->connect_error) {
+                throw new mysqli_sql_exception();
             }
         }
-        if (count($selectConditions) > 0) {
+    } catch (mysqli_sql_exception $e) {
+    } catch (Exception $e) {   
+    }
+    if($conn)
+    {
 
-            $selectConditionsString = implode(" AND ", $selectConditions);
-            $query = "SELECT * FROM $tableName WHERE $selectConditionsString";
-            $_SESSION['table'] = $query;
-        } else {
-            $query = $query = "SELECT * FROM $tableName";
-            $_SESSION['table'] = $query;
+        if(isset($_POST["wyswietlSubmit"])) {
+            $idWizyty         = $_POST["idWizyty"]       ?? null;
+            $idZwierzecia     = $_POST["idZwierzecia"]   ?? null;
+            $dataWizyty       = $_POST["dataWizyty"]     ?? null;
+            $nazwa            = $_POST["nazwa"]          ?? null;
+            $stanZwierzecia   = $_POST["stanZwierzecia"] ?? null;
+            $opisWizyty       = $_POST["opisWizyty"] ?? null;
+            $status           = $_POST["status"]         ?? null;
+            $cenaWizyty       = $_POST["cenaWizyty"]     ?? null;
+
+            $array = [
+                "idWizyty" => $idWizyty,
+                "idZwierzecia" => $idZwierzecia,
+                "dataWizyty" => $dataWizyty,
+                "nazwa" => $nazwa,
+                "stanZwierzecia" => $stanZwierzecia,
+                "opisWizyty" => $opisWizyty,
+                "status" => $status,
+                "cenaWizyty" => $cenaWizyty
+
+            ];
+
+            $selectConditions = [];
+
+            foreach ($array as $key => $value) {
+                if (!empty($value)) {
+                    array_push($selectConditions, $key . "=" .(is_string($value) ? "'$value'" : $value));
+                }
+            }
+            if (count($selectConditions) > 0) {
+
+                $selectConditionsString = implode(" AND ", $selectConditions);
+                $query = "SELECT * FROM $tableName WHERE $selectConditionsString";
+                $_SESSION['table'] = $query;
+            } else {
+                $query = $query = "SELECT * FROM $tableName";
+                $_SESSION['table'] = $query;
+            }
+            header("Location: ?info=Wyświetlono+zwierzeta");
+            exit;
         }
-        header("Location: ?info=Wyświetlono+zwierzeta");
+        if (isset($_POST["dodajSubmit"])) {
+            $idZwierzecia     = $_POST["idZwierzecia"]   ?? null;
+            $dataWizyty       = $_POST["dataWizyty"]     ?? null;
+            $nazwa            = $_POST["nazwa"]          ?? null;
+            $stanZwierzecia   = $_POST["stanZwierzecia"] ?? null;
+            $opisWizyty       = $_POST["popisWizytylec"] ?? null;
+            $status           = $_POST["status"]         ?? null;
+            $cenaWizyty       = $_POST["cenaWizyty"]     ?? null;
+
+            $array = [
+                "idZwierzecia" => $idZwierzecia,
+                "dataWizyty" => $dataWizyty,
+                "nazwa" => $nazwa,
+                "stanZwierzecia" => $stanZwierzecia,
+                "opisWizyty" => $opisWizyty,
+                "status" => $status,
+                "cenaWizyty" => $cenaWizyty
+
+            ];
+
+            $insertCols = [];
+            $insertVals = [];
+
+            foreach ($array as $key => $value) {
+                if (!empty($value)) {
+                    $insertCols[] = $key;
+                    $insertVals[] = is_string($value) ? "'$value'" : $value;
+                }
+            }
+
+            if (count($insertCols) > 0) {
+                $colsString = implode(", ", $insertCols);
+                $valsString = implode(", ", $insertVals);
+                $query = "INSERT INTO $tableName ($colsString) VALUES ($valsString)";
+                $conn->query($query);
+
+                header("Location: ?info=Dodano+zwierze");
+                exit;
+            } else {
+                header("Location: ?info=Brak+danych+do+dodania");
+                exit;
+            }
+
+        } elseif (isset($_POST["usunSubmit"])) {
+            $idWizyty         = $_POST["idWizyty"]       ?? null;
+            $idZwierzecia     = $_POST["idZwierzecia"]   ?? null;
+            $dataWizyty       = $_POST["dataWizyty"]     ?? null;
+            $nazwa            = $_POST["nazwa"]          ?? null;
+            $stanZwierzecia   = $_POST["stanZwierzecia"] ?? null;
+            $opisWizyty       = $_POST["popisWizytylec"] ?? null;
+            $status           = $_POST["status"]         ?? null;
+            $cenaWizyty       = $_POST["cenaWizyty"]     ?? null;
+
+            $array = [
+                "idWizyty" => $idWizyty,
+                "idZwierzecia" => $idZwierzecia,
+                "dataWizyty" => $dataWizyty,
+                "nazwa" => $nazwa,
+                "stanZwierzecia" => $stanZwierzecia,
+                "opisWizyty" => $opisWizyty,
+                "status" => $status,
+                "cenaWizyty" => $cenaWizyty
+
+            ];
+
+            $conditions = [];
+            foreach ($array as $key => $value) {
+                if (!empty($value)  || $value === '0') {
+                    $val = is_string($value) ? "'$value'" : $value;
+                    $conditions[] = "$key = $val";
+                }
+            }
+
+            if (count($conditions) > 0) {
+                $where = implode(" AND ", $conditions);
+                $query = "DELETE FROM $tableName WHERE $where";
+                $conn->query($query);
+                header("Location: ?info=Usunięto+zwierze(ta)");
+                exit;
+            } else {
+                header("Location: ?info=Brak+danych+do+usunięcia");
+                exit;
+            }
+
+        } elseif (isset($_POST["zmienSubmit"])) {
+
+            $idWizyty         = $_POST["idWizyty"]       ?? null;
+            $idZwierzecia     = $_POST["idZwierzecia"]   ?? null;
+            $dataWizyty       = $_POST["dataWizyty"]     ?? null;
+            $nazwa            = $_POST["nazwa"]          ?? null;
+            $stanZwierzecia   = $_POST["stanZwierzecia"] ?? null;
+            $opisWizyty       = $_POST["popisWizytylec"] ?? null;
+            $status           = $_POST["status"]         ?? null;
+            $cenaWizyty       = $_POST["cenaWizyty"]     ?? null;
+
+            $idZwierzeciaZmienione     = $_POST["idZwierzeciaZmienione"]   ?? null;
+            $dataWizytyZmienione       = $_POST["dataWizytyZmienione"]     ?? null;
+            $nazwaZmienione            = $_POST["nazwaZmienione"]          ?? null;
+            $stanZwierzeciaZmienione   = $_POST["stanZwierzeciaZmienione"] ?? null;
+            $opisWizytyZmienione       = $_POST["popisWizytylecZmienione"] ?? null;
+            $statusZmienione           = $_POST["statusZmienione"]         ?? null;
+            $cenaWizytyZmienione       = $_POST["cenaWizytyZmienione"]     ?? null;
+
+            $whereArray = [
+                "idWizyty" => $idWizyty,
+                "idZwierzecia" => $idZwierzecia,
+                "dataWizyty" => $dataWizyty,
+                "nazwa" => $nazwa,
+                "stanZwierzecia" => $stanZwierzecia,
+                "opisWizyty" => $opisWizyty,
+                "status" => $status,
+                "cenaWizyty" => $cenaWizyty
+
+            ];
+
+            $updateArray = [
+                "idZwierzecia" => $idZwierzeciaZmienione,
+                "dataWizyty" => $dataWizytyZmienione,
+                "nazwa" => $nazwaZmienione,
+                "stanZwierzecia" => $stanZwierzeciaZmienione,
+                "opisWizyty" => $opisWizytyZmienione,
+                "status" => $statusZmienione,
+                "cenaWizyty" => $cenaWizytyZmienione
+            ];
+
+            $sets = [];
+            foreach ($updateArray as $key => $val) {
+                if (!empty($val)  || $val === '0') {
+                    $val = is_string($val) ? "'$val'" : $val;
+                    $sets[] = "$key = $val";
+                }
+            }
+
+            $conditions = [];
+            foreach ($whereArray as $key => $val) {
+                if (!empty($val)  || $val === '0') {
+                    $val = is_string($val) ? "'$val'" : $val;
+                    $conditions[] = "$key = $val";
+                }
+            }
+
+            if (count($sets) > 0 && count($conditions) > 0) {
+                $setString = implode(", ", $sets);
+                $whereString = implode(" AND ", $conditions);
+                $query = "UPDATE $tableName SET $setString WHERE $whereString";
+                $conn->query($query);
+                header("Location: ?info=Zmieniono+dane+zwierzecia+$query");
+                exit;
+            } else {
+                header("Location: ?info=Brak+danych+do+zmiany");
+                exit;
+            }
+        }
+
+        header("Location: ?info=Brak+operacji");
         exit;
     }
-    if (isset($_POST["dodajSubmit"])) {
-        $idZwierzecia     = $_POST["idZwierzecia"]   ?? null;
-        $dataWizyty       = $_POST["dataWizyty"]     ?? null;
-        $nazwa            = $_POST["nazwa"]          ?? null;
-        $stanZwierzecia   = $_POST["stanZwierzecia"] ?? null;
-        $opisWizyty       = $_POST["popisWizytylec"] ?? null;
-        $status           = $_POST["status"]         ?? null;
-        $cenaWizyty       = $_POST["cenaWizyty"]     ?? null;
-
-        $array = [
-            "idZwierzecia" => $idZwierzecia,
-            "dataWizyty" => $dataWizyty,
-            "nazwa" => $nazwa,
-            "stanZwierzecia" => $stanZwierzecia,
-            "opisWizyty" => $opisWizyty,
-            "status" => $status,
-            "cenaWizyty" => $cenaWizyty
-
-        ];
-
-        $insertCols = [];
-        $insertVals = [];
-
-        foreach ($array as $key => $value) {
-            if (!empty($value)) {
-                $insertCols[] = $key;
-                $insertVals[] = is_string($value) ? "'$value'" : $value;
-            }
-        }
-
-        if (count($insertCols) > 0) {
-            $colsString = implode(", ", $insertCols);
-            $valsString = implode(", ", $insertVals);
-            $query = "INSERT INTO $tableName ($colsString) VALUES ($valsString)";
-            $conn->query($query);
-
-            header("Location: ?info=Dodano+zwierze");
-            exit;
-        } else {
-            header("Location: ?info=Brak+danych+do+dodania");
-            exit;
-        }
-
-    } elseif (isset($_POST["usunSubmit"])) {
-        $idWizyty         = $_POST["idWizyty"]       ?? null;
-        $idZwierzecia     = $_POST["idZwierzecia"]   ?? null;
-        $dataWizyty       = $_POST["dataWizyty"]     ?? null;
-        $nazwa            = $_POST["nazwa"]          ?? null;
-        $stanZwierzecia   = $_POST["stanZwierzecia"] ?? null;
-        $opisWizyty       = $_POST["popisWizytylec"] ?? null;
-        $status           = $_POST["status"]         ?? null;
-        $cenaWizyty       = $_POST["cenaWizyty"]     ?? null;
-
-        $array = [
-            "idWizyty" => $idWizyty,
-            "idZwierzecia" => $idZwierzecia,
-            "dataWizyty" => $dataWizyty,
-            "nazwa" => $nazwa,
-            "stanZwierzecia" => $stanZwierzecia,
-            "opisWizyty" => $opisWizyty,
-            "status" => $status,
-            "cenaWizyty" => $cenaWizyty
-
-        ];
-
-        $conditions = [];
-        foreach ($array as $key => $value) {
-            if (!empty($value)  || $value === '0') {
-                $val = is_string($value) ? "'$value'" : $value;
-                $conditions[] = "$key = $val";
-            }
-        }
-
-        if (count($conditions) > 0) {
-            $where = implode(" AND ", $conditions);
-            $query = "DELETE FROM $tableName WHERE $where";
-            $conn->query($query);
-            header("Location: ?info=Usunięto+zwierze(ta)");
-            exit;
-        } else {
-            header("Location: ?info=Brak+danych+do+usunięcia");
-            exit;
-        }
-
-    } elseif (isset($_POST["zmienSubmit"])) {
-
-        $idWizyty         = $_POST["idWizyty"]       ?? null;
-        $idZwierzecia     = $_POST["idZwierzecia"]   ?? null;
-        $dataWizyty       = $_POST["dataWizyty"]     ?? null;
-        $nazwa            = $_POST["nazwa"]          ?? null;
-        $stanZwierzecia   = $_POST["stanZwierzecia"] ?? null;
-        $opisWizyty       = $_POST["popisWizytylec"] ?? null;
-        $status           = $_POST["status"]         ?? null;
-        $cenaWizyty       = $_POST["cenaWizyty"]     ?? null;
-
-        $idZwierzeciaZmienione     = $_POST["idZwierzeciaZmienione"]   ?? null;
-        $dataWizytyZmienione       = $_POST["dataWizytyZmienione"]     ?? null;
-        $nazwaZmienione            = $_POST["nazwaZmienione"]          ?? null;
-        $stanZwierzeciaZmienione   = $_POST["stanZwierzeciaZmienione"] ?? null;
-        $opisWizytyZmienione       = $_POST["popisWizytylecZmienione"] ?? null;
-        $statusZmienione           = $_POST["statusZmienione"]         ?? null;
-        $cenaWizytyZmienione       = $_POST["cenaWizytyZmienione"]     ?? null;
-
-        $whereArray = [
-            "idWizyty" => $idWizyty,
-            "idZwierzecia" => $idZwierzecia,
-            "dataWizyty" => $dataWizyty,
-            "nazwa" => $nazwa,
-            "stanZwierzecia" => $stanZwierzecia,
-            "opisWizyty" => $opisWizyty,
-            "status" => $status,
-            "cenaWizyty" => $cenaWizyty
-
-        ];
-
-        $updateArray = [
-            "idZwierzeciaZmienione" => $idZwierzeciaZmienione,
-            "dataWizytyZmienione" => $dataWizytyZmienione,
-            "nazwaZmienione" => $nazwaZmienione,
-            "stanZwierzeciaZmienione" => $stanZwierzeciaZmienione,
-            "opisWizytyZmienione" => $opisWizytyZmienione,
-            "statusZmienione" => $statusZmienione,
-            "cenaWizytyZmienione" => $cenaWizytyZmienione
-        ];
-
-        $sets = [];
-        foreach ($updateArray as $key => $val) {
-            if (!empty($val)  || $val === '0') {
-                $val = is_string($val) ? "'$val'" : $val;
-                $sets[] = "$key = $val";
-            }
-        }
-
-        $conditions = [];
-        foreach ($whereArray as $key => $val) {
-            if (!empty($val)  || $val === '0') {
-                $val = is_string($val) ? "'$val'" : $val;
-                $conditions[] = "$key = $val";
-            }
-        }
-
-        if (count($sets) > 0 && count($conditions) > 0) {
-            $setString = implode(", ", $sets);
-            $whereString = implode(" AND ", $conditions);
-            $query = "UPDATE $tableName SET $setString WHERE $whereString";
-            $conn->query($query);
-            header("Location: ?info=Zmieniono+dane+zwierzecia");
-            exit;
-        } else {
-            header("Location: ?info=Brak+danych+do+zmiany");
-            exit;
-        }
-    }
-
-    header("Location: ?info=Brak+operacji");
+    header("Location: ?info=Błąd+połączenia+z+baza+danych");
     exit;
 }
 
@@ -227,9 +245,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <h3>Menu</h3>
         <nav class=menu>
                 <a href="../index.php" class="menu-item">Home</a>
-                <a href="animals.php" class="menu-item is-active">Zwierzęta</a>
+                <a href="animals.php" class="menu-item">Zwierzęta</a>
                 <a href="owners.php" class="menu-item">Właściciele</a>
-                <a href="appointments.php" class="menu-item">Wizyty</a>
+                <a href="appointments.php" class="menu-item is-active">Wizyty</a>
                 <a href="surgeries.php" class="menu-item">Zabiegi</a>
                 <a href="treatments.php" class="menu-item">Leczenia</a>
                 <a href="doctors.php" class="menu-item">Lekarze</a>
@@ -239,7 +257,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </nav>
     </aside>
     <main class="content">
-        <h1>Zwierzęta</h1>
+        <h1>Wizyty</h1>
         <hr>
         <?php
         $conn = null;
@@ -297,18 +315,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <h2>Wyświetl</h2>
                     <p>Dane wizyt(y) do wyświetlenia</p>
                     <form action="?" method="post">
-                        <label for="idZwierzecia">Id: </label>
-                        <input type="number" id="idZwierzecia" name="idZwierzecia"><br>
-                        <label for="imie">Imię: </label>
-                        <input type="text" id="imie" name="imie"><br>
-                        <label for="gatunek">Gatunek: </label>
-                        <input type="text" id="gatunek" name="gatunek"><br>
-                        <label for="rasa">Rasa: </label>
-                        <input type="text" id="rasa" name="rasa"><br>
-                        <label for="dob">Data Urodzenia: </label>
-                        <input type="date" id="dob" name="dob"><br>
-                        <label for="plec">Płeć: </label>
-                        <input type="text" id="plec" name="plec"><br><br>
+                        <label for="idWizyty">Id Wizyty: </label>
+                        <input type="number" id="idWizyty" name="idWizyty"><br>
+                        <label for="idZwierzecia">Id Zwierzęcia: </label>
+                        <input type="text" id="idZwierzecia" name="idZwierzecia"><br>
+                        <label for="dataWizyty">Data Wizyty: </label>
+                        <input type="text" id="dataWizyty" name="dataWizyty"><br>
+                        <label for="nazwa">Nazwa: </label>
+                        <input type="text" id="nazwa" name="nazwa"><br>
+                        <label for="stanZwierzecia">Stan Zwierzęcia: </label>
+                        <input type="date" id="stanZwierzecia" name="stanZwierzecia"><br>
+                        <label for="opisWizyty">Opis Wizyty: </label>
+                        <input type="text" id="opisWizyty" name="opisWizyty"><br>
+                        <label for="status">Status: </label>
+                        <input type="text" id="status" name="status"><br>
+                        <label for="cenaWizyty">Cena Wizyty: </label>
+                        <input type="text" id="cenaWizyty" name="cenaWizyty"><br><br>
                         <div class="controlButtons">
                             <input type="submit" name="wyswietlSubmit" value="Zastosuj">
                             <input type="reset" value="Wyczyść">
@@ -323,16 +345,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <h2>Dodaj</h2>
                     <p>Dane zwierzecia do dodania</p>
                     <form action="?" method="post">
-                        <label for="imie">Imię: </label>
-                        <input type="text" id="imie" name="imie"><br>
-                        <label for="gatunek">Gatunek: </label>
-                        <input type="text" id="gatunek" name="gatunek"><br>
-                        <label for="rasa">Rasa: </label>
-                        <input type="text" id="rasa" name="rasa"><br>
-                        <label for="dob">Data Urodzenia: </label>
-                        <input type="date" id="dob" name="dob"><br>
-                        <label for="plec">Płeć: </label>
-                        <input type="text" id="plec" name="plec"><br><br>
+                        <label for="idZwierzecia">Id Zwierzęcia: </label>
+                        <input type="text" id="idZwierzecia" name="idZwierzecia"><br>
+                        <label for="dataWizyty">Data Wizyty: </label>
+                        <input type="text" id="dataWizyty" name="dataWizyty"><br>
+                        <label for="nazwa">Nazwa: </label>
+                        <input type="text" id="nazwa" name="nazwa"><br>
+                        <label for="stanZwierzecia">Stan Zwierzęcia: </label>
+                        <input type="date" id="stanZwierzecia" name="stanZwierzecia"><br>
+                        <label for="opisWizyty">Opis Wizyty: </label>
+                        <input type="text" id="opisWizyty" name="opisWizyty"><br>
+                        <label for="status">Status: </label>
+                        <input type="text" id="status" name="status"><br>
+                        <label for="cenaWizyty">Cena Wizyty: </label>
+                        <input type="text" id="cenaWizyty" name="cenaWizyty"><br><br>
                         <div class="controlButtons">
                             <input type="submit" name="dodajSubmit" value="Zastosuj">
                             <input type="reset" value="Wyczyść">
@@ -348,18 +374,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <h2>Usuń</h2>
                     <p>Dane zwierzęcia / zwierząt do usunięcia</p>
                     <form action="?" method="post">
-                        <label for="idZwierzecia">Id: </label>
-                        <input type="number" id="idZwierzecia" name="idZwierzecia"><br>
-                        <label for="imie">Imię: </label>
-                        <input type="text" id="imie" name="imie"><br>
-                        <label for="gatunek">Gatunek: </label>
-                        <input type="text" id="gatunek" name="gatunek"><br>
-                        <label for="rasa">Rasa: </label>
-                        <input type="text" id="rasa" name="rasa"><br>
-                        <label for="dob">Data Urodzenia: </label>
-                        <input type="date" id="dob" name="dob"><br>
-                        <label for="plec">Płeć: </label>
-                        <input type="text" id="plec" name="plec"><br><br>
+                        <label for="idWizyty">Id Wizyty: </label>
+                        <input type="number" id="idWizyty" name="idWizyty"><br>
+                        <label for="idZwierzecia">Id Zwierzęcia: </label>
+                        <input type="text" id="idZwierzecia" name="idZwierzecia"><br>
+                        <label for="dataWizyty">Data Wizyty: </label>
+                        <input type="text" id="dataWizyty" name="dataWizyty"><br>
+                        <label for="nazwa">Nazwa: </label>
+                        <input type="text" id="nazwa" name="nazwa"><br>
+                        <label for="stanZwierzecia">Stan Zwierzęcia: </label>
+                        <input type="date" id="stanZwierzecia" name="stanZwierzecia"><br>
+                        <label for="opisWizyty">Opis Wizyty: </label>
+                        <input type="text" id="opisWizyty" name="opisWizyty"><br>
+                        <label for="status">Status: </label>
+                        <input type="text" id="status" name="status"><br>
+                        <label for="cenaWizyty">Cena Wizyty: </label>
+                        <input type="text" id="cenaWizyty" name="cenaWizyty"><br><br>
                         <div class="controlButtons">
                             <input type="submit" name="usunSubmit" value="Zastosuj">
                             <input type="reset" value="Wyczyść">
@@ -375,29 +405,37 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <h2>Zmień</h2>
                     <p>Dane zwierzęcia / zwierząt do zmiany</p>
                     <form action="?" method="post">
-                        <label for="idZwierzecia">Id: </label>
-                        <input type="number" id="idZwierzecia" name="idZwierzecia"><br>
-                        <label for="imie">Imię: </label>
-                        <input type="text" id="imie" name="imie"><br>
-                        <label for="gatunek">Gatunek: </label>
-                        <input type="text" id="gatunek" name="gatunek"><br>
-                        <label for="rasa">Rasa: </label>
-                        <input type="text" id="rasa" name="rasa"><br>
-                        <label for="dob">Data Urodzenia: </label>
-                        <input type="date" id="dob" name="dob"><br>
-                        <label for="plec">Płeć: </label>
-                        <input type="text" id="plec" name="plec"><br><br>
+                        <label for="idWizyty">Id Wizyty: </label>
+                        <input type="number" id="idWizyty" name="idWizyty"><br>
+                        <label for="idZwierzecia">Id Zwierzęcia: </label>
+                        <input type="text" id="idZwierzecia" name="idZwierzecia"><br>
+                        <label for="dataWizyty">Data Wizyty: </label>
+                        <input type="text" id="dataWizyty" name="dataWizyty"><br>
+                        <label for="nazwa">Nazwa: </label>
+                        <input type="text" id="nazwa" name="nazwa"><br>
+                        <label for="stanZwierzecia">Stan Zwierzęcia: </label>
+                        <input type="date" id="stanZwierzecia" name="stanZwierzecia"><br>
+                        <label for="opisWizyty">Opis Wizyty: </label>
+                        <input type="text" id="opisWizyty" name="opisWizyty"><br>
+                        <label for="status">Status: </label>
+                        <input type="text" id="status" name="status"><br>
+                        <label for="cenaWizyty">Cena Wizyty: </label>
+                        <input type="text" id="cenaWizyty" name="cenaWizyty"><br>
                         <p>Nowe dane</p>
-                        <label for="imieZmienione">Imię: </label>
-                        <input type="text" id="imieZmienione" name="imieZmienione"><br>
-                        <label for="gatunekZmienione">Gatunek: </label>
-                        <input type="text" id="gatunekZmienione" name="gatunekZmienione"><br>
-                        <label for="rasaZmienione">Rasa: </label>
-                        <input type="text" id="rasaZmienione" name="rasaZmienione"><br>
-                        <label for="dobZmienione">Data Urodzenia: </label>
-                        <input type="date" id="dobZmienione" name="dobZmienione"><br>
-                        <label for="plecZmienione">Płeć: </label>
-                        <input type="text" id="plecZmienione" name="plecZmienione"><br><br>
+                        <label for="idZwierzeciaZmienione">Id Zwierzęcia: </label>
+                        <input type="text" id="idZwierzeciaZmienione" name="idZwierzeciaZmienione"><br>
+                        <label for="dataWizytyZmienione">Data Wizyty: </label>
+                        <input type="text" id="dataWizytyZmienione" name="dataWizytyZmienione"><br>
+                        <label for="nazwaZmienione">Nazwa: </label>
+                        <input type="text" id="nazwaZmienione" name="nazwaZmienione"><br>
+                        <label for="stanZwierzeciaZmienione">Stan Zwierzęcia: </label>
+                        <input type="date" id="stanZwierzeciaZmienione" name="stanZwierzeciaZmienione"><br>
+                        <label for="opisWizytyZmienione">Opis Wizyty: </label>
+                        <input type="text" id="opisWizytyZmienione" name="opisWizytyZmienione"><br>
+                        <label for="statusZmienione">Status: </label>
+                        <input type="text" id="statusZmienione" name="statusZmienione"><br>
+                        <label for="cenaWizytyZmienione">Cena Wizyty: </label>
+                        <input type="text" id="cenaWizytyZmienione" name="cenaWizytyZmienione"><br><br>
                         <div class="controlButtons">
                             <input type="submit" name="zmienSubmit" value="Zastosuj">
                             <input type="reset" value="Wyczyść">
