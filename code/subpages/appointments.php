@@ -6,16 +6,49 @@ $databaseName = "klinika";
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     $conn = null;
+    $oldUsername = $_SESSION['username'] ?? null;
+    $oldPassword = $_SESSION['password'] ?? null;
+    $_SESSION['username'] = $_POST["username"] ?? $_SESSION['username'] ?? null;
+    $_SESSION['password'] = $_POST["password"] ?? $_SESSION['password'] ?? null;
+    $_SESSION['userId'] = $_SESSION['userId'] ?? null;
+
+    if(!isset($_SESSION["logged"]))
+    {
+        $_SESSION["logged"] = false;
+    }
     try {
-        if (!empty($_SESSION['username']) && (!empty($_SESSION['password']) || $_SESSION['password']=="")) {
-            $conn = new mysqli("localhost",  $_SESSION['username'], $_SESSION['password'], $databaseName);
-            $conn->set_charset("utf8");
-            if ($conn->connect_error) {
-                throw new mysqli_sql_exception();
+        $conn = new mysqli("localhost", 'root', '', $databaseName);
+        $conn->set_charset("utf8");
+        
+        $authorizationQuery = "SELECT UserId FROM USERS WHERE username = '" . $_SESSION['username'] . "' AND password = '" . $_SESSION['password'] . "' ";
+        $result = $conn->query($authorizationQuery);
+
+        if($result->num_rows > 0) {
+            while($row = $result->fetch_assoc()) {
+                $_SESSION['userId'] = strval($row['UserId']);
             }
+        } else {
+            $_SESSION['userId'] = null;
+        }
+
+
+        if ($conn->connect_error || empty($_SESSION['userId'])) {
+            throw new mysqli_sql_exception();
+        }
+        
+        if(!$_SESSION["logged"] || $oldUsername!==$_SESSION['username'] || $oldPassword !== $_SESSION['password'])
+        {
+            $_SESSION["logged"] = true;
+            header("Location: ?info=Zalogowano+pomyśnie" . $_SESSION['userId'] . $_SESSION['username'] . " " . $_SESSION['password']);
+            exit;
         }
     } catch (mysqli_sql_exception $e) {
-    } catch (Exception $e) {   
+        $_SESSION["logged"] = false;
+        header("Location: ?info=Nie+udało+się+zalogować" . $authorizationQuery . " " . $_SESSION['userId']);
+        exit;
+    } catch(Exception $e) {
+        $_SESSION["logged"] = false;
+        header("Location: ?info=Nie+udało+się+zalogować");
     }
     if($conn)
     {
@@ -268,7 +301,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         try {
             if (!empty($_SESSION['username']) && (!empty($_SESSION['password']) || $_SESSION['password']=="")) {
-                $conn = new mysqli("localhost",  $_SESSION['username'], $_SESSION['password'], $databaseName);
+                $conn = new mysqli("localhost", 'root', '', $databaseName);
                 $conn->set_charset("utf8");
                 if ($conn->connect_error) {
                     throw new mysqli_sql_exception();
@@ -282,7 +315,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $insert = $delete = $update = $select = false;
 
         if ($conn) {
-            $query = "SELECT privilege FROM PRIVILEGES WHERE username = '" . $_SESSION['username'] . "'";
+            $query = "SELECT privilege FROM PRIVILEGES WHERE UserId = '" . $_SESSION['userId'] . "'";
             $result = $conn->query($query);
             while ($row = $result->fetch_assoc()) {
                 $priv = strtolower($row["privilege"]);
