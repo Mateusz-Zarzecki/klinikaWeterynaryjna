@@ -286,9 +286,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } catch (Exception $e) {   
         }
     
-        
-        $insert = $delete = $update = $select = false;
-
         $insert = $delete = $update = $select = false;
 
         if ($conn) {
