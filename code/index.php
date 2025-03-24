@@ -20,48 +20,9 @@
             $conn->set_charset("utf8");
             
             if(isset($_POST['logowanieSubmit'])) {
-                $authorizationQuery = "SELECT UserId FROM USERS WHERE username = '" . $_SESSION['username'] . "' AND password = '" . $_SESSION['password'] . "' ";
-                $result = $conn->query($authorizationQuery);
-    
-                if($result->num_rows > 0) {
-                    while($row = $result->fetch_assoc()) {
-                        $_SESSION['userId'] = strval($row['UserId']);
-                    }
-                } else {
-                    $_SESSION['userId'] = null;
-                }
-    
-    
-                if ($conn->connect_error || empty($_SESSION['userId'])) {
-                    throw new mysqli_sql_exception();
-                }
-                
-                if(!$_SESSION["logged"] || $oldUsername!==$_SESSION['username'] || $oldPassword !== $_SESSION['password'])
-                {
-                    $_SESSION["logged"] = true;
-                    header("Location: ?info=Zalogowano+pomyśnie" . $_SESSION['userId'] . $_SESSION['username'] . " " . $_SESSION['password']);
-                    exit;
-                }
+                login($conn);
             } elseif (isset($_POST['rejestacjaSubmit'])) {
-                $authorizationQuery = "SELECT UserId FROM USERS WHERE username = '" . $_SESSION['username'] . "'";
-                $result = $conn->query($authorizationQuery);
-                if($result->num_rows == 0) {
-                    $addQuery = "INSERT INTO USERS (Username, Password) VALUES ('" . $_SESSION['username'] . "', '" . $_SESSION['password'] . "')";
-                    $conn->query($addQuery);
-                    
-                    $idQuery = "SELECT UserId FROM USERS WHERE username = '" . $_SESSION['username'] . "' AND password = '" . $_SESSION['password'] . "' ";
-                    $id = $conn->query($idQuery);
-            
-                    if($id->num_rows > 0) {
-                        while($row = $id->fetch_assoc()) {
-                            $_SESSION['userId'] = strval($row['UserId']);
-                        }
-                        $privilegeQuery = "INSERT INTO PRIVILEGES (UserId, Privilege) VALUES (" . $_SESSION['userId'] . ", 'all')";
-                        $conn->query($privilegeQuery);
-                    }
-
-
-                }
+                register($conn);
             }
             
         } catch (mysqli_sql_exception $e) {

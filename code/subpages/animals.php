@@ -1,4 +1,7 @@
 <?php
+
+require '../dbConnection.php';
+
 session_start();
 $tableName = "zwierzeta";
 $databaseName = "klinika";
@@ -6,50 +9,7 @@ $databaseName = "klinika";
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     $conn = null;
-    $oldUsername = $_SESSION['username'] ?? null;
-    $oldPassword = $_SESSION['password'] ?? null;
-    $_SESSION['username'] = $_POST["username"] ?? $_SESSION['username'] ?? null;
-    $_SESSION['password'] = $_POST["password"] ?? $_SESSION['password'] ?? null;
-    $_SESSION['userId'] = $_SESSION['userId'] ?? null;
-
-    if(!isset($_SESSION["logged"]))
-    {
-        $_SESSION["logged"] = false;
-    }
-    try {
-        $conn = new mysqli("localhost", 'root', '', $databaseName);
-        $conn->set_charset("utf8");
-        
-        $authorizationQuery = "SELECT UserId FROM USERS WHERE username = '" . $_SESSION['username'] . "' AND password = '" . $_SESSION['password'] . "' ";
-        $result = $conn->query($authorizationQuery);
-
-        if($result->num_rows > 0) {
-            while($row = $result->fetch_assoc()) {
-                $_SESSION['userId'] = strval($row['UserId']);
-            }
-        } else {
-            $_SESSION['userId'] = null;
-        }
-
-
-        if ($conn->connect_error || empty($_SESSION['userId'])) {
-            throw new mysqli_sql_exception();
-        }
-        
-        if(!$_SESSION["logged"] || $oldUsername!==$_SESSION['username'] || $oldPassword !== $_SESSION['password'])
-        {
-            $_SESSION["logged"] = true;
-            header("Location: ?info=Zalogowano+pomyśnie" . $_SESSION['userId'] . $_SESSION['username'] . " " . $_SESSION['password']);
-            exit;
-        }
-    } catch (mysqli_sql_exception $e) {
-        $_SESSION["logged"] = false;
-        header("Location: ?info=Nie+udało+się+zalogować" . $authorizationQuery . " " . $_SESSION['userId']);
-        exit;
-    } catch(Exception $e) {
-        $_SESSION["logged"] = false;
-        header("Location: ?info=Nie+udało+się+zalogować");
-    }
+    keepConnect($conn, $databaseName);
 
     if($conn)
     {
@@ -70,24 +30,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 "plec" => $plec
             ];
     
-            $selectConditions = [];
-    
-            foreach ($array as $key => $value) {
-                if (!empty($value)) {
-                    array_push($selectConditions, $key . "=" .(is_string($value) ? "'$value'" : $value));
-                }
-            }
-            if (count($selectConditions) > 0) {
-    
-                $selectConditionsString = implode(" AND ", $selectConditions);
-                $query = "SELECT * FROM $tableName WHERE $selectConditionsString";
-                $_SESSION['table'] = $query;
-            } else {
-                $query = $query = "SELECT * FROM $tableName";
-                $_SESSION['table'] = $query;
-            }
-            header("Location: ?info=Wyświetlono+zwierzeta");
-            exit;
+            selectTable($array, $tableName, $conn);
         }
         if (isset($_POST["dodajSubmit"])) {
             $imie         = $_POST["imie"]        ?? null;
@@ -104,28 +47,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 "plec" => $plec
             ];
     
-            $insertCols = [];
-            $insertVals = [];
-    
-            foreach ($array as $key => $value) {
-                if (!empty($value)) {
-                    $insertCols[] = $key;
-                    $insertVals[] = is_string($value) ? "'$value'" : $value;
-                }
-            }
-    
-            if (count($insertCols) > 0) {
-                $colsString = implode(", ", $insertCols);
-                $valsString = implode(", ", $insertVals);
-                $query = "INSERT INTO $tableName ($colsString) VALUES ($valsString)";
-                $conn->query($query);
-    
-                header("Location: ?info=Dodano+zwierze");
-                exit;
-            } else {
-                header("Location: ?info=Brak+danych+do+dodania");
-                exit;
-            }
+            addToTable($array, $tableName, $conn);
     
         } elseif (isset($_POST["usunSubmit"])) {
             $idZwierzecia        = $_POST["idZwierzecia"] ?? null;
@@ -144,24 +66,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 "plec" => $plec
             ];
     
-            $conditions = [];
-            foreach ($array as $key => $value) {
-                if (!empty($value)  || $value === '0') {
-                    $val = is_string($value) ? "'$value'" : $value;
-                    $conditions[] = "$key = $val";
-                }
-            }
-    
-            if (count($conditions) > 0) {
-                $where = implode(" AND ", $conditions);
-                $query = "DELETE FROM $tableName WHERE $where";
-                $conn->query($query);
-                header("Location: ?info=Usunięto+zwierze(ta)");
-                exit;
-            } else {
-                header("Location: ?info=Brak+danych+do+usunięcia");
-                exit;
-            }
+            deleteFromTable($array, $tableName, $conn);
     
         } elseif (isset($_POST["zmienSubmit"])) {
             $idZwierzecia        = $_POST["idZwierzecia"] ?? null;
@@ -194,33 +99,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 "plec" => $plecZmienione
             ];
     
-            $sets = [];
-            foreach ($updateArray as $key => $val) {
-                if (!empty($val)  || $val === '0') {
-                    $val = is_string($val) ? "'$val'" : $val;
-                    $sets[] = "$key = $val";
-                }
-            }
-    
-            $conditions = [];
-            foreach ($whereArray as $key => $val) {
-                if (!empty($val)  || $val === '0') {
-                    $val = is_string($val) ? "'$val'" : $val;
-                    $conditions[] = "$key = $val";
-                }
-            }
-    
-            if (count($sets) > 0 && count($conditions) > 0) {
-                $setString = implode(", ", $sets);
-                $whereString = implode(" AND ", $conditions);
-                $query = "UPDATE $tableName SET $setString WHERE $whereString";
-                $conn->query($query);
-                header("Location: ?info=Zmieniono+dane+zwierzecia");
-                exit;
-            } else {
-                header("Location: ?info=Brak+danych+do+zmiany");
-                exit;
-            }
+            updateTable($updateArray, $whereArray,$tableName, $conn);
         }
     
         header("Location: ?info=Brak+operacji");
@@ -437,33 +316,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         if ($conn) {
             if ($select) {
-                echo '<div class="tabela">'.
-                '<div class="table-border">';
-                $query = ($_SESSION['table'] ?? null) ?? "SELECT * FROM $tableName";
-                $result = $conn->query($query);
-                if (!$result) {
-                    die("MySQL Error");
-                }
-
-                echo '<table>'.
-                '<thead>'.
-                '<tr>';
-                while($fieldinfo = $result->fetch_field()) {
-                    echo '<th>' . $fieldinfo->name . '</th>';
-                }
-                echo '</tr>';
-                echo '</thead>';
-
-                while($row = $result->fetch_assoc()) {
-                    echo '<tr>';
-                    foreach($row as $cell) {
-                        echo '<td>' . $cell . '</td>';
-                    }
-                    echo '</tr>';
-                }
-                echo '</table>'.
-                '</div>'.
-                '</div>';
+                displayTable($tableName, $conn);
             }
             $conn->close();
         }
@@ -474,33 +327,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 </main>
 
 </div>
-<script>
-    const menu_toggle = document.querySelector('.menu-toggle');
-    const sidebar = document.querySelector('.sidebar');
-
-    menu_toggle.addEventListener('click', () => {
-        menu_toggle.classList.toggle('is-active');
-        sidebar.classList.toggle('is-active');
-    })
-
-    function showMenu(className)
-    {
-        let menus = document.getElementsByClassName('opcjeMenu')[0];
-        for(var i=0; i< menus.childNodes.length;i++)
-        {
-            menus.childNodes[i].style.display = "none";
-        
-        }
-        let menu = document.getElementsByClassName(className)[0];
-        menu.style.display = "block";
-    }
-
-    window.onload = function() {
-        let params = new URLSearchParams(window.location.search);
-        if (params.has('info')) {
-            alert(params.get('info'));
-        }
-    };
-</script>
+<script src=../script.js></script>
 </body>
 </html>
