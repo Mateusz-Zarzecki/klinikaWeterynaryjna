@@ -8,105 +8,110 @@ $databaseName = "klinika";
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
-    $conn = null;
-    keepConnect($conn, $databaseName);
-
-    if($conn)
-    {
-        if(isset($_POST["wyswietlSubmit"])) {
-            $idZwierzecia = $_POST["idZwierzecia"]?? null;
-            $imie         = $_POST["imie"]        ?? null;
-            $gatunek      = $_POST["gatunek"]     ?? null;
-            $rasa         = $_POST["rasa"]        ?? null;
-            $dob          = $_POST["dob"]         ?? null;
-            $plec         = $_POST["plec"]        ?? null;
+    try {
+        $conn = null;
+        keepConnect($conn, $databaseName);
     
-            $array = [
-                "idZwierzecia" => $idZwierzecia,
-                "imie" => $imie,
-                "gatunek" => $gatunek,
-                "rasa" => $rasa,
-                "dob" => $dob,
-                "plec" => $plec
-            ];
-    
-            selectTable($array, $tableName, $conn);
+        if($conn)
+        {
+            if(isset($_POST["wyswietlSubmit"])) {
+                $idZwierzecia = $_POST["idZwierzecia"]?? null;
+                $imie         = $_POST["imie"]        ?? null;
+                $gatunek      = $_POST["gatunek"]     ?? null;
+                $rasa         = $_POST["rasa"]        ?? null;
+                $dob          = $_POST["dob"]         ?? null;
+                $plec         = $_POST["plec"]        ?? null;
+        
+                $array = [
+                    "idZwierzecia" => $idZwierzecia,
+                    "imie" => $imie,
+                    "gatunek" => $gatunek,
+                    "rasa" => $rasa,
+                    "dob" => $dob,
+                    "plec" => $plec
+                ];
+        
+                selectTable($array, $tableName, $conn);
+            }
+            if (isset($_POST["dodajSubmit"])) {
+                $imie         = $_POST["imie"]        ?? null;
+                $gatunek      = $_POST["gatunek"]     ?? null;
+                $rasa         = $_POST["rasa"]        ?? null;
+                $dob          = $_POST["dob"]         ?? null;
+                $plec         = $_POST["plec"]        ?? null;
+        
+                $array = [
+                    "imie" => $imie,
+                    "gatunek" => $gatunek,
+                    "rasa" => $rasa,
+                    "dob" => $dob,
+                    "plec" => $plec
+                ];
+        
+                addToTable($array, $tableName, $conn);
+        
+            } elseif (isset($_POST["usunSubmit"])) {
+                $idZwierzecia        = $_POST["idZwierzecia"] ?? null;
+                $imie                = $_POST["imie"]         ?? null;
+                $gatunek             = $_POST["gatunek"]      ?? null;
+                $rasa                = $_POST["rasa"]         ?? null;
+                $dob                 = $_POST["dob"]          ?? null;
+                $plec                = $_POST["plec"]         ?? null;
+        
+                $array = [
+                    "idZwierzecia" => $idZwierzecia,
+                    "imie" => $imie,
+                    "gatunek" => $gatunek,
+                    "rasa" => $rasa,
+                    "dob" => $dob,
+                    "plec" => $plec
+                ];
+        
+                deleteFromTable($array, $tableName, $conn);
+        
+            } elseif (isset($_POST["zmienSubmit"])) {
+                $idZwierzecia        = $_POST["idZwierzecia"] ?? null;
+                $imie                = $_POST["imie"]         ?? null;
+                $gatunek             = $_POST["gatunek"]      ?? null;
+                $rasa                = $_POST["rasa"]         ?? null;
+                $dob                 = $_POST["dob"]          ?? null;
+                $plec                = $_POST["plec"]         ?? null;
+        
+                $imieZmienione        = $_POST["imieZmienione"]        ?? null;
+                $gatunekZmienione     = $_POST["gatunekZmienione"]     ?? null;
+                $rasaZmienione        = $_POST["rasaZmienione"]        ?? null;
+                $dobZmienione         = $_POST["dobZmienione"]         ?? null;
+                $plecZmienione        = $_POST["plecZmienione"]        ?? null;
+        
+                $whereArray = [
+                    "idZwierzecia" => $idZwierzecia,
+                    "imie" => $imie,
+                    "gatunek" => $gatunek,
+                    "rasa" => $rasa,
+                    "dob" => $dob,
+                    "plec" => $plec
+                ];
+        
+                $updateArray = [
+                    "imie" => $imieZmienione,
+                    "gatunek" => $gatunekZmienione,
+                    "rasa" => $rasaZmienione,
+                    "dob" => $dobZmienione,
+                    "plec" => $plecZmienione
+                ];
+        
+                updateTable($updateArray, $whereArray,$tableName, $conn);
+            }
+        
+            header("Location: ?info=Brak+operacji");
+            exit;
         }
-        if (isset($_POST["dodajSubmit"])) {
-            $imie         = $_POST["imie"]        ?? null;
-            $gatunek      = $_POST["gatunek"]     ?? null;
-            $rasa         = $_POST["rasa"]        ?? null;
-            $dob          = $_POST["dob"]         ?? null;
-            $plec         = $_POST["plec"]        ?? null;
-    
-            $array = [
-                "imie" => $imie,
-                "gatunek" => $gatunek,
-                "rasa" => $rasa,
-                "dob" => $dob,
-                "plec" => $plec
-            ];
-    
-            addToTable($array, $tableName, $conn);
-    
-        } elseif (isset($_POST["usunSubmit"])) {
-            $idZwierzecia        = $_POST["idZwierzecia"] ?? null;
-            $imie                = $_POST["imie"]         ?? null;
-            $gatunek             = $_POST["gatunek"]      ?? null;
-            $rasa                = $_POST["rasa"]         ?? null;
-            $dob                 = $_POST["dob"]          ?? null;
-            $plec                = $_POST["plec"]         ?? null;
-    
-            $array = [
-                "idZwierzecia" => $idZwierzecia,
-                "imie" => $imie,
-                "gatunek" => $gatunek,
-                "rasa" => $rasa,
-                "dob" => $dob,
-                "plec" => $plec
-            ];
-    
-            deleteFromTable($array, $tableName, $conn);
-    
-        } elseif (isset($_POST["zmienSubmit"])) {
-            $idZwierzecia        = $_POST["idZwierzecia"] ?? null;
-            $imie                = $_POST["imie"]         ?? null;
-            $gatunek             = $_POST["gatunek"]      ?? null;
-            $rasa                = $_POST["rasa"]         ?? null;
-            $dob                 = $_POST["dob"]          ?? null;
-            $plec                = $_POST["plec"]         ?? null;
-    
-            $imieZmienione        = $_POST["imieZmienione"]        ?? null;
-            $gatunekZmienione     = $_POST["gatunekZmienione"]     ?? null;
-            $rasaZmienione        = $_POST["rasaZmienione"]        ?? null;
-            $dobZmienione         = $_POST["dobZmienione"]         ?? null;
-            $plecZmienione        = $_POST["plecZmienione"]        ?? null;
-    
-            $whereArray = [
-                "idZwierzecia" => $idZwierzecia,
-                "imie" => $imie,
-                "gatunek" => $gatunek,
-                "rasa" => $rasa,
-                "dob" => $dob,
-                "plec" => $plec
-            ];
-    
-            $updateArray = [
-                "imie" => $imieZmienione,
-                "gatunek" => $gatunekZmienione,
-                "rasa" => $rasaZmienione,
-                "dob" => $dobZmienione,
-                "plec" => $plecZmienione
-            ];
-    
-            updateTable($updateArray, $whereArray,$tableName, $conn);
-        }
-    
-        header("Location: ?info=Brak+operacji");
+        header("Location: ?info=Błąd+połączenia+z+baza+danych");
         exit;
     }
-    header("Location: ?info=Błąd+połączenia+z+baza+danych");
-    exit;
+    catch(Exception $e) {
+        
+    }
 }
 
 ?>
@@ -148,40 +153,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <hr>
         <?php
         $conn = null;
-        $loginStatus = $_SESSION['logged'] ?? null;
-        if($loginStatus === false || is_null($loginStatus)) {
-            header("Location: ../index.php?info=Nie zalogowano");
-        }
 
-        try {
-            if (!empty($_SESSION['username']) && (!empty($_SESSION['password']) || $_SESSION['password']=="")) {
-                $conn = new mysqli("localhost", 'root', '', $databaseName);
-                $conn->set_charset("utf8");
-                if ($conn->connect_error) {
-                    throw new mysqli_sql_exception();
-                }
-            }
-        } catch (mysqli_sql_exception $e) {
-        } catch (Exception $e) {   
-        }
+        protocolGETLogin($conn, $databaseName);
     
         $insert = $delete = $update = $select = false;
 
-        if ($conn) {
-            $query = "SELECT privilege FROM PRIVILEGES WHERE UserId = '" . $_SESSION['userId'] . "'";
-            $result = $conn->query($query);
-
-            while ($row = $result->fetch_assoc()) {
-                $priv = strtolower($row["privilege"]);
-                if ($priv === "select") $select = true;
-                if ($priv === "insert") $insert = true;
-                if ($priv === "delete") $delete = true;
-                if ($priv === "update") $update = true;
-                if ($priv === "all") {
-                    $insert = $delete = $update = $select = true;
-                }
-            }
-        }
+        getPrivileges($conn, $insert, $delete, $update, $select);
 
         if ($conn && ($insert || $delete || $update || $select)) {
             echo <<< EOD

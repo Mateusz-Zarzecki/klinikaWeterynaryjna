@@ -45,6 +45,40 @@
             header("Location: ?info=Nie+udało+się+zalogować");
         }
     }
+    function protocolGETLogin(&$conn, $databaseName) {
+        $loginStatus = $_SESSION['logged'] ?? null;
+        if($loginStatus === false || is_null($loginStatus)) {
+            header("Location: ../index.php?info=Nie zalogowano");
+        }
+
+        try {
+            if (!empty($_SESSION['username']) && (!empty($_SESSION['password']) || $_SESSION['password']=="")) {
+                $conn = new mysqli("localhost", 'root', '', $databaseName);
+                $conn->set_charset("utf8");
+                if ($conn->connect_error) {
+                    throw new mysqli_sql_exception();
+                }
+            }
+        } catch (mysqli_sql_exception $e) {
+        } catch (Exception $e) {   
+        }
+    }
+    function getPrivileges(&$conn, &$insert, &$delete, &$update, &$select) {
+        if ($conn) {
+            $query = "SELECT privilege FROM PRIVILEGES WHERE UserId = '" . $_SESSION['userId'] . "'";
+            $result = $conn->query($query);
+            while ($row = $result->fetch_assoc()) {
+                $priv = strtolower($row["privilege"]);
+                if ($priv === "select") $select = true;
+                if ($priv === "insert") $insert = true;
+                if ($priv === "delete") $delete = true;
+                if ($priv === "update") $update = true;
+                if ($priv === "all") {
+                    $insert = $delete = $update = $select = true;
+                }
+            }
+        }
+    }
     function login(&$conn) {
         $authorizationQuery = "SELECT UserId FROM USERS WHERE username = '" . $_SESSION['username'] . "' AND password = '" . $_SESSION['password'] . "' ";
         $result = $conn->query($authorizationQuery);

@@ -1,4 +1,6 @@
 <?php
+require "dbConnection.php";
+
     session_start();
     $databaseName = "klinika";
 
