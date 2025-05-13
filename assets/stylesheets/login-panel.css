@@ -1,0 +1,26 @@
+.logowanie {
+    display:flex;
+    flex-direction:column;
+    align-items: center;
+    margin-bottom: 30px;
+}
+
+#password {
+    margin-left:4px;
+}
+h2 {
+    margin-bottom: 10px;
+}
+input {
+    background-color:white;
+    border:#2e3047 1px solid;
+    border-radius: 3px;
+    padding:3px;
+    margin-bottom: 4px;
+    margin-top: 4px;
+    transition-duration: 0.5s;
+}
+input[type="submit"]
+{
+    width:100%;
+}
